@@ -1,0 +1,47 @@
+# Typecheck, lint and build on every push to main and every PR.
+#
+# This repo has never been deployed, so CI is the only thing standing between a
+# broken commit and the first production deploy. It will not catch logic bugs,
+# but "main does not compile" can no longer merge unnoticed.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# A newer push to the same branch makes an in-flight run irrelevant.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: typecheck / lint / build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          # Vercel's current default major. package.json "engines" sets the floor
+          # (>=20.9.0); this pins what CI actually runs on.
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - run: npm run typecheck
+
+      - run: npm run lint
+
+      # This app needs no environment to build. Note that its NEXT_PUBLIC_* values
+      # are inlined at build time, so the real Vercel build must have them set
+      # before it runs — a CI pass here does not prove the deploy is configured.
+      - run: npm run build
