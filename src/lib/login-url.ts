@@ -9,7 +9,11 @@
  * Pure + client-safe (no server-only deps) so both the server game pages and the
  * client nav can share it.
  */
-const PORTAL = (process.env.NEXT_PUBLIC_PORTAL_URL ?? "").replace(/\/+$/, "");
+// Falls back to the production portal when unset, for the same reason GAMES does
+// below: an empty string would silently build a same-origin "/login" link, and
+// this app does not serve /login — the portal does. NEXT_PUBLIC_ values are
+// inlined at BUILD time, so this must be set in Vercel before the build, not after.
+const PORTAL = (process.env.NEXT_PUBLIC_PORTAL_URL ?? "https://app.dsec.club").replace(/\/+$/, "");
 // This app's own public origin, so the portal can redirect back across domains.
 // Falls back to the production origin when unset (matches layout metadataBase).
 const GAMES = (process.env.NEXT_PUBLIC_GAMES_URL ?? "https://games.dsec.club").replace(/\/+$/, "");
