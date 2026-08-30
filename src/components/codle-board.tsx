@@ -42,9 +42,15 @@ export function CodleBoard() {
           fetch("/api/games/codle/round", { cache: "no-store" }),
           fetch("/api/games/codle/state", { cache: "no-store" }),
         ]);
-        const round = (await roundRes.json()) as State;
-        const st = (await stateRes.json()) as State;
+        const round = (await roundRes.json()) as State & { error?: string };
+        const st = (await stateRes.json()) as State & { error?: string };
         if (!active) return;
+        if (!roundRes.ok || !stateRes.ok) {
+          // Leave `state` null so the guard below renders the message instead of
+          // a board built from `?? 5` / `?? 6` defaults.
+          setError(round.error ?? st.error ?? "could not load today's Codle");
+          return;
+        }
         setState({ ...round, ...st });
       } catch {
         if (active) setError("could not load today's Codle");
